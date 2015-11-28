@@ -11,7 +11,7 @@ from matplotlib import animation
 def set_up():
     global fig, ax, line, time_text
     fig = plt.figure()
-    ax = plt.axes(ylim=(0, 2), xlim=(-2, 2))
+    ax = plt.axes(ylim=(-1, 2), xlim=(-2, 2))
     ax.set_ylabel('$q(x,t)$')
     ax.set_xlabel('$x$')
     ax.set_title('Godunovs method for linear systems')
@@ -72,14 +72,14 @@ def Godunov_linear_solv(A,q_l,q_r):
 		#iterating over time
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
-			U[:,j] = q[:,2]									#Change here to animate other components
+			U[:,j] = q[:,0]									#Change here to animate other components
 			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
 			qtemp = q
 			for n in range( dim ):
 				for i in range(np.size(x)):
-					if( i == 0 ): qtemp[0,n] = qtemp[0,n] - (( eigenvalue[n] * t_step / x_step) * (qtemp[0,n] - qtemp[np.size(x) - 1 ,n]))
-					qtemp[i,n] = qtemp[i,n] - ((eigenvalue[n] * t_step / x_step) * (qtemp[i,n] - qtemp[i-1,n]))
-					if( i == np.size(x) - 1):	qtemp[i,n] = qtemp[i,n] - ((eigenvalue[n] * t_step / x_step) * (qtemp[i,n] - qtemp[0,n]))
+					if( i == 0 ): qtemp[0,n] = qtemp[0,n] - (( abs(eigenvalue[n]) * t_step / x_step) * (qtemp[0,n] - qtemp[np.size(x) - 1 ,n]))
+					qtemp[i,n] = qtemp[i,n] - ((abs(eigenvalue[n]) * t_step / x_step) * (qtemp[i,n] - qtemp[i-1,n]))
+					if( i == np.size(x) - 1):	qtemp[i,n] = qtemp[i,n] - ((abs(eigenvalue[n]) * t_step / x_step) * (qtemp[i,n] - qtemp[0,n]))
 				q = qtemp
 	#1dim case with the wavespeed A, that gets passed instead of a matrix:			
 	else:
@@ -123,4 +123,4 @@ q_r1 = 1
 U=Godunov_linear_solv( A3 , q_l3 , q_r3)
 run()
 
-# The programm can crash for max eigenvalue * c > 1, because the CFL condition is not satisfied and therefore it gets instable
+# The programm can crash for max eigenvalue * c > 1, because the CFL condition is not satisfied => unstable
