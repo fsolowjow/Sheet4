@@ -11,7 +11,7 @@ from matplotlib import animation
 def set_up():
     global fig, ax, line, time_text
     fig = plt.figure()
-    ax = plt.axes(ylim=(-1, 2), xlim=(-2, 2))
+    ax = plt.axes(ylim=(0, 1), xlim=(-2, 2))
     ax.set_ylabel('$q(x,t)$')
     ax.set_xlabel('$x$')
     ax.set_title('Godunovs method for linear systems')
@@ -72,7 +72,7 @@ def Godunov_linear_solv(A,q_l,q_r):
 		#iterating over time
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
-			U[:,j] = q[:,0]									#Change here to animate other components
+			U[:,j] = q[:,1]									#Change here to animate other components
 			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
 			qtemp = q
 			for n in range( dim ):
@@ -92,9 +92,9 @@ def Godunov_linear_solv(A,q_l,q_r):
 			U[:,j] = q
 			qtemp = q
 			for i in range(np.size(q)):
-				if( i == 0 ): qtemp[0] = qtemp[0] - ((A * t_step / x_step) * (qtemp[0] - qtemp[np.size(q) - 1]))
-				qtemp[i] = qtemp[i] - ((A * t_step / x_step) * (qtemp[i] - qtemp[i-1]))
-				if( i == np.size(q) - 1):	qtemp[i] = qtemp[i] - ((A * t_step / x_step) * (qtemp[i] - qtemp[0]))
+				if( i == 0 ): qtemp[0] = qtemp[0] - ((abs(A) * t_step / x_step) * (qtemp[0] - qtemp[np.size(q) - 1]))
+				qtemp[i] = qtemp[i] - ((abs(A) * t_step / x_step) * (qtemp[i] - qtemp[i-1]))
+				if( i == np.size(q) - 1):	qtemp[i] = qtemp[i] - ((abs(A) * t_step / x_step) * (qtemp[i] - qtemp[0]))
 			q = qtemp
 	
 	return U
