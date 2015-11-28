@@ -122,3 +122,5 @@ q_r1 = 1
 
 U=Godunov_linear_solv( A3 , q_l3 , q_r3)
 run()
+
+# The programm can crash for max eigenvalue * c > 1, because the CFL condition is not satisfied and therefore it gets instable
