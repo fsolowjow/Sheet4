@@ -99,12 +99,12 @@ def Godunov_linear_solv(A,q_l,q_r):
 	
 	return U
 
-t_step = 0.01
-#t_step = input("Enter time stepsize:")
+#t_step = 0.01
+t_step = input("Enter time stepsize (e.g. 0.01):")
 t = np.arange ( 0 , 4 , t_step)
 
-x_step = 0.05
-#x_step = input("Enter space stepsize:")
+#x_step = 0.05
+x_step = input("Enter space stepsize (e.g. 0.05):")
 x = np.arange(-2, 2 , x_step)
 
 A3 = np.array ( [[2 , 1 , -1] , [1, 1 , 1] , [-1, 1 , 2]])
