@@ -76,7 +76,6 @@ def Godunov_linear_solv(A,q_l,q_r):
 	if(dim > 1):
 		eigenvalue , eigenvector = LA.eig(A)
 		wavespeed = eigenvalue * t_step / x_step
-		print(eigenvalue)
 		U = np.empty((x.size,t.size))
 		#Sets the Q_i up for the first time step with the initial data. 
 		#Q[j,i] is a matrix and contains the values for component i at x[j] at each time step
@@ -85,7 +84,7 @@ def Godunov_linear_solv(A,q_l,q_r):
 		#iterating over time
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
-			U[:,j] = q[:,2]									#Change here to animate other components
+			U[:,j] = q[:,0]									#Change here to animate other components
 			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
 			qtemp = q
 			for n in range( dim ):
