@@ -64,8 +64,8 @@ def wave_sum(wavespeed, q , x , i):
 			if( i == 0 ):				temp += (wavespeed[j] * (q[0,j] - q[np.size(x) - 1,j]))					
 			else:						temp += (wavespeed[j] * (q[i,j] - q[i-1,j]))
 		else:
-			if( i == np.size(x) - 1):	temp += (wavespeed[j] * (q[0,j] - q[i,j]))
-			else:						temp += (wavespeed[j] * (q[i+1,j] - q[i,j]))
+			if( i == np.size(x) - 1):	temp = temp + (wavespeed[j] * (q[0,j] - q[i,j]))
+			else:						temp = temp + (wavespeed[j] * (q[i+1,j] - q[i,j]))
 	return temp
 
 def Godunov_linear_solv(A,q_l,q_r):
@@ -84,7 +84,7 @@ def Godunov_linear_solv(A,q_l,q_r):
 		#iterating over time
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
-			U[:,j] = q[:,0]									#Change here to animate other components
+			U[:,j] = q[:,2]									#Change here to animate other components
 			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
 			qtemp = q
 			for n in range( dim ):
@@ -117,7 +117,7 @@ def Godunov_linear_solv(A,q_l,q_r):
 	
 	return U
 
-t_step = 0.001
+t_step = 0.01
 #t_step = input("Enter time stepsize (e.g. 0.01):")
 t = np.arange ( 0 , 4 , t_step)
 
@@ -133,7 +133,7 @@ A2 = np.array ( [[2 , 1] , [0.0001,2]])
 q_l2 = np.array([0,1])
 q_r2 = np.array([1,0])	
 
-A1 = 2
+A1 = -2
 #q not realy needed for 1dim case
 q_l1 = 0
 q_r1 = 1
