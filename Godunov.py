@@ -11,7 +11,7 @@ from matplotlib import animation
 def set_up():
     global fig, ax, line, time_text
     fig = plt.figure()
-    ax = plt.axes(ylim=(-1, max), xlim=(-2, 2))
+    ax = plt.axes(ylim=(-2, 2), xlim=(-2, 2))
     ax.set_ylabel('$q(x,t)$')
     ax.set_xlabel('$x$')
     ax.set_title('Godunovs method for linear systems')
@@ -44,28 +44,25 @@ def run():
 def initial_values(q_l , q_r , eigenvector , x):
 	dim = np.size(q_l)
 	qtemp = np.zeros( (np.size(x) , dim) )
-	w_r = LA.solve(eigenvector, q_r)
-	w_l = LA.solve(eigenvector, q_l)
 	for i in range(dim):
 		for j in range(np.size(x)):
-			if(x[j] < 0):	qtemp[j,i] = w_l[i]
-			else:			qtemp[j,i] = w_r[i]
-	
+			if(x[j] < 0):	qtemp[j,i] = q_l[i]
+			else:			qtemp[j,i] = q_r[i]
 	return qtemp
 	
 def initial_values_1dim(x):
 	if ( x < 0 ): return 0
 	else:	return 1
 
-def wave_sum(wavespeed, q , x , i):
-	temp = 0
+def wave_sum(wavespeed, q , x , i , l , r):
+	temp = np.zeros( np.size(wavespeed))
 	for j in range( np.size(wavespeed)):
 		if ( wavespeed[j] > 0 ):	
-			if( i == 0 ):				temp += (wavespeed[j] * (q[0,j] - q[np.size(x) - 1,j]))					
-			else:						temp += (wavespeed[j] * (q[i,j] - q[i-1,j]))
+			if( i == 0 ):				temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[np.size(x) - 1,:])) * r[:,j]					
+			else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i,:] - q[i-1,:])) * r[:,j]
 		else:
-			if( i == np.size(x) - 1):	temp = temp + (wavespeed[j] * (q[0,j] - q[i,j]))
-			else:						temp = temp + (wavespeed[j] * (q[i+1,j] - q[i,j]))
+			if( i == np.size(x) - 1):	temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[i,:])) * r[:,j]
+			else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i+1,:] - q[i,:])) * r[:,j]
 	return temp
 
 def Godunov_linear_solv(A,q_l,q_r):
@@ -75,23 +72,22 @@ def Godunov_linear_solv(A,q_l,q_r):
 	#Case of a system: 
 	if(dim > 1):
 		eigenvalue , eigenvector = LA.eig(A)
+		r = eigenvector
+		eigenvalue , l = LA.eig(A.T)
 		wavespeed = eigenvalue * t_step / x_step
 		U = np.empty((x.size,t.size))
 		#Sets the Q_i up for the first time step with the initial data. 
 		#Q[j,i] is a matrix and contains the values for component i at x[j] at each time step
 		q = initial_values( q_l , q_r , eigenvector , x )
-
 		#iterating over time
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
 			U[:,j] = q[:,2]									#Change here to animate other components
 			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
 			qtemp = q
-			for n in range( dim ):
-				for i in range(np.size(x)):
-					qtemp[i,n] = q[i,n] - wave_sum(wavespeed, q , x , i)
+			for i in range(np.size(x)):
+				qtemp[i,:] = q[i,:] - wave_sum(wavespeed, q , x , i , l , r)
 			q = qtemp	
-			
 			
 			
 	#1dim case with the wavespeed A, that gets passed instead of a matrix:	
@@ -117,7 +113,7 @@ def Godunov_linear_solv(A,q_l,q_r):
 	
 	return U
 
-t_step = 0.01
+t_step = 0.005
 #t_step = input("Enter time stepsize (e.g. 0.01):")
 t = np.arange ( 0 , 4 , t_step)
 
@@ -133,7 +129,7 @@ A2 = np.array ( [[2 , 1] , [0.0001,2]])
 q_l2 = np.array([0,1])
 q_r2 = np.array([1,0])	
 
-A1 = -2
+A1 = 2
 #q not realy needed for 1dim case
 q_l1 = 0
 q_r1 = 1
