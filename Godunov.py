@@ -54,18 +54,69 @@ def initial_values_1dim(x):
 	if ( x < 0 ): return 0
 	else:	return 1
 
-def wave_sum(wavespeed, q , x , i , l , r):
-	temp = np.zeros( np.size(wavespeed))
-	for j in range( np.size(wavespeed)):
-		if ( wavespeed[j] > 0 ):	
-			if( i == 0 ):				temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[np.size(x) - 1,:])) * r[:,j]					
-			else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i,:] - q[i-1,:])) * r[:,j]
-		else:
-			if( i == np.size(x) - 1):	temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[i,:])) * r[:,j]
-			else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i+1,:] - q[i,:])) * r[:,j]
-	return temp
+def update_Godunov(wavespeed, q , x , l , r):
+	qtemp = np.zeros( (np.size(x) , np.size(wavespeed)) )
+	
+	#iterating over space
+	for i in range (np.size(x)):
+		temp = np.zeros( np.size(wavespeed))
+		#calculates the wavesum
+		for j in range( np.size(wavespeed)):
+			if ( wavespeed[j] > 0 ):	
+				if( i == 0 ):				temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[np.size(x) - 1,:])) * r[:,j]					
+				else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i,:] - q[i-1,:])) * r[:,j]
+			else:
+				if( i == np.size(x) - 1):	temp += wavespeed[j] * np.inner( l[:,j] , (q[0,:] - q[i,:])) * r[:,j]
+				else:						temp += wavespeed[j] * np.inner( l[:,j] , (q[i+1,:] - q[i,:])) * r[:,j]
+		qtemp[i,:]= q[i,:] - temp
+	return qtemp
 
-def Godunov_linear_solv(A,q_l,q_r):
+	
+def update_LF(wavespeed, q , x , l , r , A):
+	dim = np.sqrt(np.size(A))
+	qtemp = np.zeros( (np.size(x) , dim) )
+	
+	#iterating over space
+	for i in range (np.size(x)):
+		temp = np.zeros( dim )
+
+		if( i == 0 ):				
+			temp = wavespeed * np.dot(A ,(q[i+1,:] - q[np.size(x) - 1,:]))
+			qtemp[i,:]= (q[i+1,:] + q[np.size(x) - 1,:])/2  - temp
+			
+		if( i == np.size(x) - 1 ):	
+			temp = wavespeed * np.dot(A ,(q[0,:] - q[i-1,:]))
+			qtemp[i,:]= (q[0,:] + q[i - 1,:])/2  - temp
+			
+		if( i != np.size(x) - 1 and i != np.size(x) - 1 ):						
+			temp = wavespeed * np.dot(A ,(q[i+1,:] - q[i-1,:]))
+			qtemp[i,:]= (q[i+1,:] + q[i-1,:])/2 - temp
+
+	return qtemp
+
+def update_LW(wavespeed, q , x , l , r , A):
+	dim = np.sqrt(np.size(A))
+	qtemp = np.zeros( (np.size(x) , dim) )
+	
+	#iterating over space
+	for i in range (np.size(x)):
+		temp = np.zeros( dim )
+
+		if( i == 0 ):										
+			temp = wavespeed * np.dot(A ,(q[i+1,:] - q[np.size(x)-1,:])) - (2*wavespeed*wavespeed) * np.dot( np.dot(A,A) , (q[i+1,:] - 2*q[i,:] + q[np.size(x)-1,:]) )
+			
+		if( i == np.size(x) - 1 ):							
+			temp = wavespeed * np.dot(A ,(q[0,:] - q[i-1,:])) - (2*wavespeed*wavespeed) * np.dot( np.dot(A,A) , (q[0,:] - 2*q[i,:] + q[i-1,:]) )
+			
+		if( i != np.size(x) - 1 and i != np.size(x) - 1 ):	
+			temp = wavespeed * np.dot(A ,(q[i+1,:] - q[i-1,:])) - (2*wavespeed*wavespeed) * np.dot( np.dot(A,A) , (q[i+1,:] - 2*q[i,:] + q[i-1,:]) )
+		
+		qtemp[i,:]= q[i,:] - temp
+
+	return qtemp
+	
+	
+def Godunov_linear_solv(A , q_l , q_r , mode):
 
 	dim = np.size(q_l)
 	#Distinguish between 1dim case and system.
@@ -74,7 +125,9 @@ def Godunov_linear_solv(A,q_l,q_r):
 		eigenvalue , eigenvector = LA.eig(A)
 		r = eigenvector
 		eigenvalue , l = LA.eig(A.T)
-		wavespeed = eigenvalue * t_step / x_step
+		wavespeed_Godunov = eigenvalue * t_step / x_step	#Vector!
+		wavespeed_LF = t_step / (x_step*2)					#Skalar!
+		
 		U = np.empty((x.size,t.size))
 		#Sets the Q_i up for the first time step with the initial data. 
 		#Q[j,i] is a matrix and contains the values for component i at x[j] at each time step
@@ -83,13 +136,19 @@ def Godunov_linear_solv(A,q_l,q_r):
 		for j in range(np.size(t)) :
 			#Values for the animation are saved in U
 			U[:,j] = q[:,2]									#Change here to animate other components
-			#The values for the next time step are saved in qtemp and afterwards q -> qtemp
-			qtemp = q
-			for i in range(np.size(x)):
-				qtemp[i,:] = q[i,:] - wave_sum(wavespeed, q , x , i , l , r)
-			q = qtemp	
+
+			#Godunov
+			if( mode == 1):
+				q = update_Godunov(wavespeed_Godunov, q , x , l , r)
 			
-			
+			#Lax-Friedrich		
+			if( mode == 2):
+				q = update_LF(wavespeed_LF, q , x , l , r , A)
+				
+			#Lax-Wendroff
+			if( mode == 3):
+				q = update_LW(wavespeed_LF, q , x , l , r , A)
+	
 	#1dim case with the wavespeed A, that gets passed instead of a matrix:	
 	
 	else:
@@ -113,11 +172,13 @@ def Godunov_linear_solv(A,q_l,q_r):
 	
 	return U
 
-t_step = 0.005
+mode = input(" 1 for Godunov \n 2 for Lax-Friedrich \n 3 for Lax-Wendroff \n")	
+	
+t_step = 0.01
 #t_step = input("Enter time stepsize (e.g. 0.01):")
 t = np.arange ( 0 , 4 , t_step)
 
-x_step = 0.05
+x_step = 0.04
 #x_step = input("Enter space stepsize (e.g. 0.05):")
 x = np.arange(-2, 2 , x_step)
 
@@ -134,7 +195,7 @@ A1 = 2
 q_l1 = 0
 q_r1 = 1
 
-U=Godunov_linear_solv( A3 , q_l3 , q_r3)
+U=Godunov_linear_solv( A3 , q_l3 , q_r3 , mode)
 max=np.max(U)
 run()
 
