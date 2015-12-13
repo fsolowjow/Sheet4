@@ -174,13 +174,17 @@ def Godunov_linear_solv(A , q_l , q_r , mode):
 
 mode = input(" 1 for Godunov \n 2 for Lax-Friedrich \n 3 for Lax-Wendroff \n")	
 	
-t_step = 0.01
+t_step = 0.001
 #t_step = input("Enter time stepsize (e.g. 0.01):")
 t = np.arange ( 0 , 4 , t_step)
 
-x_step = 0.04
+x_step = 0.01
 #x_step = input("Enter space stepsize (e.g. 0.05):")
 x = np.arange(-2, 2 , x_step)
+
+A4 = np.array( [[2 , -1 , 1, 3] , [ -1, 3 , 0 , 1] , [1, 0 , 1 , 2] , [3,1,2,1]] )
+q_l4 = np.array([1,1,0.5 , -1])
+q_r4 = np.array([0,-1,1,1])
 
 A3 = np.array ( [[2 , 1 , -1] , [1, 1 , 1] , [-1, 1 , 2]])
 q_l3 = np.array([1,0,1])
@@ -195,7 +199,7 @@ A1 = 2
 q_l1 = 0
 q_r1 = 1
 
-U=Godunov_linear_solv( A3 , q_l3 , q_r3 , mode)
+U=Godunov_linear_solv( A4 , q_l4 , q_r4 , mode )
 max=np.max(U)
 run()
 
